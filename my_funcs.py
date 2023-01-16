@@ -3,18 +3,22 @@ from bs4 import BeautifulSoup
 import re
 import os
 from fnmatch import fnmatch
+import time
+
+def fileExists(filePath):
+    return os.path.exists(filePath)
+
+def get_time():
+    return time.time()
 
 def fix_your_titles(title):
-    print("in fix title: ", title)
     if not title.startswith("Chapter"):
         title = "Chapter " + title
-        print(title)
         
     if ":" not in title:
         match = re.search(r"Chapter\s*(\d+)", title)
         if match:
             title = title.replace(match.group(0), match.group(0) + ":")
-            print("after match : ", title)
     return title
 
 def get_page(page):
