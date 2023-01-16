@@ -4,6 +4,19 @@ import re
 import os
 from fnmatch import fnmatch
 
+def fix_your_titles(title):
+    print("in fix title: ", title)
+    if not title.startswith("Chapter"):
+        title = "Chapter " + title
+        print(title)
+        
+    if ":" not in title:
+        match = re.search(r"Chapter\s*(\d+)", title)
+        if match:
+            title = title.replace(match.group(0), match.group(0) + ":")
+            print("after match : ", title)
+    return title
+
 def get_page(page):
     headers = {'User-Agent': 'Mozilla/5.0'}
     try:

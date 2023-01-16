@@ -12,17 +12,21 @@ print("got cover image")
 next_chap = "not none"
 counted = 0
 
-while next_chap is not None and counted<10:
+while next_chap is not None:# and counted<1:
     
     chapter_text = []
-    counted+=1    
+   
+    # epub chapters are html
     chapter_text.append(u"<html><head></head><body><h1>")
+    
     # This code block is used to navigate to the next chapter on 
     # the webpage specified by the 'page' variable.
 
     r = mf.get_page(page)
     soup = mf.get_soup(r)
 
+    # getting the next chapter link
+    
     next_chap = soup.find("div", class_ = "nav-next")
     if next_chap is not None:
         page = next_chap.find("a")["href"] # making sure the page variable is changed for iteration
@@ -30,31 +34,72 @@ while next_chap is not None and counted<10:
     # Retrieving and formatting chapter title and subtitle, 
     # appending to the chapter_text list
     
-    title = soup.find("h1", class_="dib mb0 fw700 fs24 lh1.5").get_text()
-    filetitle = mf.windows_validate(title)
-    chapter_text.append(title)
-    chapter_text.append(u"</h1>")
-
-    subtitle = soup.find("h2", class_="subtitle fw400").get_text()
-    chapter_text.append(u"<h2>")
-    chapter_text.append(subtitle)
-    chapter_text.append(u"</h2><br>")
-    if counted<2:
-        author = subtitle
-
     texts = soup.find_all("div", class_="dib pr")
     
-    # Iterating through all texts, appending the first paragraph to chapter_text, 
-    # writing chapter_text to a file with a title as the file name
+    # type 1 chapters 
     
-    for text in texts:
-        chapter_text.append(text.find("p"))
+    if texts:
+        title = soup.find("h1", class_="dib mb0 fw700 fs24 lh1.5").get_text()
+        title = mf.fix_your_titles(title)
+        filetitle = mf.windows_validate(title)
+        chapter_text.append(title)
+        chapter_text.append(u"</h1>")
+        
+        subtitle = soup.find("h2", class_="subtitle fw400")
+        
+        # if the translator kept the subtitle text
+        
+        if subtitle:
+            subtitle = subtitle.get_text()
+            chapter_text.append(u"<h2>")
+            chapter_text.append(subtitle)
+            chapter_text.append(u"</h2>")
+            if counted<1:
+                author = subtitle
+                
+        chapter_text.append(u"<br>")
+        for text in texts:
+            chapter_text.append(text.find("p"))
+            
+    # type 2 chapters
     
+    else:
+        text_wrapper = soup.find("div", class_="text-left")
+        texts = text_wrapper.find_all("p")
+
+        # translator is extra lazy
+
+        if texts[0].find("br"):
+            texts[0].find("br").replaceWith("break_finder")
+            flipper = str(texts[0].get_text())
+            
+            title = flipper.split("break_finder")[0]
+            new_start = "<p>" + flipper.replace(title + "break_finder", "") + "</p>"
+            texts.pop(0)
+            texts.insert(0, new_start)
+            
+        else:
+            title = texts[0].get_text()
+            
+        title = mf.fix_your_titles(title)
+        filetitle = mf.windows_validate(title)
+        chapter_text.append(title)
+        chapter_text.append(u"</h1>")
+        texts.pop(0)
+
+        for text in texts:
+            chapter_text.append(text)
+
     chapter_text.append(u"</body></html>")
     
+    # write to file
+    
     with open("creationData/{}.xhtml".format(filetitle), "w", encoding='utf8') as file:
-        for line in chapter_text:
-            file.write(str(line) + "\n")
+       for line in chapter_text:
+           file.write(str(line) + "\n")
+    
+    # testing stuff, ignore this and below comment
+    #counted+=1
     
     # Progress update
     print("got ", title)
