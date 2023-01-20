@@ -4,6 +4,7 @@ import re
 import os
 from fnmatch import fnmatch
 import time
+import sys
 
 def fileExists(filePath):
     return os.path.exists(filePath)
@@ -12,7 +13,9 @@ def get_time():
     return time.time()
 
 def fix_your_titles(title):
-    if not title.startswith("Chapter"):
+    title = re.sub(r"^\d+\s*", "", title)
+    
+    if not re.search(r"Chapter\s*(\d+)", title):
         title = "Chapter " + title
         
     if ":" not in title:
@@ -27,8 +30,10 @@ def get_page(page):
         r = requests.get(page, headers=headers)
     except requests.exceptions.ConnectionError as err:
         print("Connection Error : \n", err)
+        sys.exit()
     except requests.exceptions.HTTPError as err:
         print("Http error : \n", err)
+        sys.exit()
     return r
 
 def get_soup(r):
@@ -36,6 +41,7 @@ def get_soup(r):
         soup = BeautifulSoup(r.text, "html.parser")
     except Exception as err:
         print("Error while parsing :\n", err)
+        sys.exit()
     return soup
 
 def download_and_return_image_path(page, myId):

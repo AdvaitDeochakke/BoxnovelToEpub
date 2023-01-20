@@ -29,6 +29,13 @@ book.spine = ['nav']
 next_chap = "not none"
 counted = 0
 
+#to-do : i figured out the text-left thing is everywhere, need to do that now
+#need to rewrite the code so that the logic flow is 
+#retrieve page
+#check if any title identifiers are present (cha-tit, dib mb0, etc)
+#if yes, proceed accordingly
+#then go through the rest of the page, taking the text from the <p>s
+
 while next_chap is not None:# and counted<1:
     
     chapter_text = ""
