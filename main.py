@@ -1,11 +1,19 @@
 import my_funcs as mf
 from ebooklib import epub
+import re
 
 book = epub.EpubBook()
 
 start_time = mf.get_time()
 
 page = "https://boxnovel.com/novel/outside-of-time/chapter-1/"
+start_chapter = 1
+end_chapter = 0
+whetherFull = False
+if end_chapter == 0:
+    whetherFull = True
+needed_chapters = end_chapter - start_chapter +1
+page = mf.sterilize(page, start_chapter)
 
 myTitle = mf.get_data(page)
 print("got title - ", myTitle.title())
@@ -36,7 +44,7 @@ counted = 0
 #if yes, proceed accordingly
 #then go through the rest of the page, taking the text from the <p>s
 
-while next_chap is not None:# and counted<1:
+while next_chap is not None and (counted<needed_chapters or whetherFull):
     
     chapter_text = ""
    
@@ -58,62 +66,48 @@ while next_chap is not None:# and counted<1:
     # Retrieving and formatting chapter title and subtitle, 
     # appending to the chapter_text list
     
-    texts = soup.find_all("div", class_="dib pr")
-    
-    # type 1 chapters 
-    
-    if texts:
-        title = soup.find("h1", class_="dib mb0 fw700 fs24 lh1.5").get_text()
-        title = mf.fix_your_titles(title)
-        filetitle = mf.windows_validate(title)
-        chapter_text += (title)
-        chapter_text += (u"</h1>")
-        
-        subtitle = soup.find("h2", class_="subtitle fw400")
-        
-        # if the translator kept the subtitle text
-        
-        if subtitle:
-            subtitle = subtitle.get_text()
-            chapter_text += (u"<h2>")
-            chapter_text += (subtitle)
-            chapter_text += (u"</h2>")
-            if counted<1:
-                author = subtitle
-                book.add_author(author)
-                
-        chapter_text += (u"<br>")
-        for text in texts:
-            chapter_text += (str(text.find("p")))
-            
-    # type 2 chapters
-    
+    texts = soup.find("div", class_="text-left")
+    h1_element = texts.find('h1')
+    h2_element = texts.find('h2')
+    if h1_element:
+        cur_element = h1_element
     else:
-        text_wrapper = soup.find("div", class_="text-left")
-        texts = text_wrapper.find_all("p")
-
-        # translator is extra lazy
-
-        if texts[0].find("br"):
-            texts[0].find("br").replaceWith("break_finder")
-            flipper = str(texts[0].get_text())
-            
-            title = flipper.split("break_finder")[0]
-            new_start = "<p>" + flipper.replace(title + "break_finder", "") + "</p>"
-            texts.pop(0)
-            texts.insert(0, new_start)
-            
+        cur_element = texts.find('p')
+    
+    if re.search(r"<br />", str(cur_element)) or re.search(r"<br/>", str(cur_element)):
+        if re.search(r"<br />", str(cur_element)):
+            title_element = (str(cur_element).split("<br />")[0]).split("<p>")[1]
+            rest_element = "<p>" + str(cur_element).split("<br />")[1]
         else:
-            title = texts[0].get_text()
+            title_element = (str(cur_element).split("<br/>")[0]).split("<p>")[1]
+            rest_element = "<p>" + str(cur_element).split("<br/>")[1]
             
-        title = mf.fix_your_titles(title)
+        title = mf.fix_your_titles(title_element)
+        filetitle = mf.windows_validate(title)
+        chapter_text += title
+        chapter_text += (u"</h1><br>")
+        chapter_text += rest_element
+        
+    else:
+        title = mf.fix_your_titles(cur_element.get_text())
         filetitle = mf.windows_validate(title)
         chapter_text += (title)
-        chapter_text += (u"</h1>")
-        texts.pop(0)
-
-        for text in texts:
-            chapter_text += (str(text))
+        chapter_text += (u"</h1><br>")
+        
+    if h2_element:
+        cur_element = h2_element
+        subtitle = cur_element.get_text()
+        chapter_text += (u"<h2>")
+        chapter_text += (subtitle)
+        chapter_text += (u"</h2>")
+        chapter_text += (u"<br>")
+        if counted<1:
+            author = subtitle
+            book.add_author(author)
+    
+    all_p = texts.find_all('p')
+    for tag_p in all_p[1:]:
+        chapter_text += (str(tag_p))
 
     chapter_text += (u"</body></html>")
     

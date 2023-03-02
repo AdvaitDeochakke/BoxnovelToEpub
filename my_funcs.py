@@ -101,3 +101,12 @@ def get_chapter_title_for_epub(title):
     chapter_name = match.group(1)
     chapter_name = chapter_name.replace("-", ":", 1)
     return chapter_name
+
+def sterilize(page, start_chapter):
+    if not page.startswith("https://"):
+        page = "https://" + page
+    if not re.search(r"/chapter-\d+/$", page):
+        page = page.rstrip("/") + f"/chapter-{start_chapter}/"
+    if not re.search(rf"/chapter-{start_chapter}/", page):
+        page = page.split('/chapter')[0] + f"/chapter-{start_chapter}/"
+    return page
