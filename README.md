@@ -1,7 +1,7 @@
 # BoxnovelToEpub
 WIP : Take URL from boxnovel and convert novel to an epub, after scraping
 
-to add: ~~command line argument for novel~~ idk what else tbh
+to add: ~~command line argument for novel~~ add a check to see if the cover image already exists before downloading it?
 
 issues: only works with select configurations, because of course no one likes standardizing how they should format their chapters
 
