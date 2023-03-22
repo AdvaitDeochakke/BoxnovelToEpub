@@ -1,18 +1,55 @@
 import my_funcs as mf
 from ebooklib import epub
 import re
+import sys
 
 book = epub.EpubBook()
 
 start_time = mf.get_time()
 
-page = "https://boxnovel.com/novel/outside-of-time/chapter-1/"
-start_chapter = 1
+print("Give the link to the novel, can be novel page, or any chapter page")
+pagelink = ""
+pagelink = input()
+
+pagelink = mf.sanitize_pagelink(pagelink)
+if pagelink == "":
+    sys.exit()
+
+page = pagelink
+print("Enter the start and end chapters")
+print("enter -1 if you want the full novel")
+print("if you want the full novel from a certain chapter (say 100), enter \"100\" followed by a \"-1\"")
+print("if you want a subset, enter \"100\" \"146\"")
+
+start_chapter = 0
 end_chapter = 0
+
+while True:
+    try:
+        start_chapter = input()
+        if int(start_chapter) < 0:
+            start_chapter = 0
+            end_chapter = 0
+            print("sure, getting full novel")
+        else:
+            end_chapter = input()
+            if int(end_chapter) < 0:
+                end_chapter = 0
+                print("getting full novel from chapter", start_chapter)
+            else:
+                print("getting novel from chapter ", start_chapter, "to", end_chapter)
+        
+        start_chapter = int(start_chapter)
+        end_chapter = int(end_chapter)
+        break
+        
+    except ValueError:
+        print("invalid numbers entered. please enter a NUMBER. try again")
+        
 whetherFull = False
 if end_chapter == 0:
     whetherFull = True
-needed_chapters = end_chapter - start_chapter +1
+needed_chapters = int(end_chapter) - int(start_chapter) +1
 page = mf.sterilize(page, start_chapter)
 
 myTitle = mf.get_data(page)
@@ -69,10 +106,26 @@ while next_chap is not None and (counted<needed_chapters or whetherFull):
     texts = soup.find("div", class_="text-left")
     h1_element = texts.find('h1')
     h2_element = texts.find('h2')
+    h3_element = texts.find('h3')
+    incorrect_title = 1 # set false if there is a clear h1/h2/h3 around title
+    # otherwise, high possibility that erroneous formatting
     if h1_element:
         cur_element = h1_element
+        incorrect_title = 0
+    elif h3_element and not h1_element:
+        cur_element = h3_element
+        incorrect_title = 0
+    elif h2_element and not (h1_element or h3_element):
+        cur_element = h2_element
+        incorrect_title = 0
     else:
         cur_element = texts.find('p')
+        # if the text inside the cur_element contains 
+        # a regex pattern as such
+        # the word chapter, followed by a space or hypen, followed by a number
+        # set 'incorrect_title' to 0 (its not incorrect, just pure lazy)
+        if re.search(r'chapter[-\s]\d+', cur_element.text, re.IGNORECASE):
+            incorrect_title = 0
     
     if re.search(r"<br />", str(cur_element)) or re.search(r"<br/>", str(cur_element)):
         if re.search(r"<br />", str(cur_element)):
@@ -87,14 +140,42 @@ while next_chap is not None and (counted<needed_chapters or whetherFull):
         chapter_text += title
         chapter_text += (u"</h1><br>")
         chapter_text += rest_element
-        
+
+    # there are a few chapters where the <p> tag is just not opened for title?
+    # that causes issues at times and I have no clue how to fix it without breaking more things
+    # pretty cope fix is breaking if len > some number
+    
+    elif (len(str(cur_element)) > 100 and incorrect_title): # dont want to break longer but correct titles
+        # check if length of str(cur_element) > 100
+        # if yes, break it at the last space just under 100
+        # title_element = first part
+        # rest_element = "<p>" + remaining part
+        index = str(cur_element)[:100].rfind(' ')
+        title_element = str(cur_element)[:index]
+        rest_element = "<p>" + str(cur_element)[index+1:]
+
+        title = mf.fix_your_titles(title_element)
+        filetitle = mf.windows_validate(title)
+        chapter_text += title
+        chapter_text += (u"</h1><br>")
+        chapter_text += rest_element
+    
     else:
         title = mf.fix_your_titles(cur_element.get_text())
         filetitle = mf.windows_validate(title)
         chapter_text += (title)
         chapter_text += (u"</h1><br>")
         
-    if h2_element:
+    # Another issue is some chapters are completely hosted on the website and instead have a 
+    # link to another text hosting site
+    # i dont really wannt work around that tbh
+        
+    # Another issue is that some novels have multiple chapters hosted on the same page
+    # that makes it so that the link is something like /chapter-1-10/
+    # i CAN solve it if i figure out a way to get the link from the dropdown linklist and iterate
+    # but honestly, cba
+    
+    if h2_element and (h1_element or h3_element):
         cur_element = h2_element
         subtitle = cur_element.get_text()
         chapter_text += (u"<h2>")
