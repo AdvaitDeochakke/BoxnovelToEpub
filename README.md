@@ -1,3 +1,8 @@
+# How to Use  
+Get the main.py and my_funcs.py  
+Ensure you have python and the libraries installed from requirements.txt  
+Run main.py
+
 # BoxnovelToEpub
 WIP : Take URL from boxnovel and convert novel to an epub, after scraping
 
