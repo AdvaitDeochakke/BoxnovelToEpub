@@ -1,0 +1,7 @@
+ebooklib
+re
+sys
+requests
+fnmatch
+time
+bs4
