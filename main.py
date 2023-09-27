@@ -28,7 +28,7 @@ while True:
     try:
         start_chapter = input()
         if int(start_chapter) < 0:
-            start_chapter = 0
+            start_chapter = 1
             end_chapter = 0
             print("sure, getting full novel")
         else:
@@ -102,6 +102,7 @@ while next_chap is not None and (counted<needed_chapters or whetherFull):
     
     # Retrieving and formatting chapter title and subtitle, 
     # appending to the chapter_text list
+    # print(soup)
     
     texts = soup.find("div", class_="text-left")
     h1_element = texts.find('h1')
@@ -194,7 +195,9 @@ while next_chap is not None and (counted<needed_chapters or whetherFull):
     
     # write to file, check if exists, update progress
     chapter = epub.EpubHtml(title= title, 
-                                file_name=filetitle+'.xhtml', lang='en')
+                                file_name= filetitle+'.xhtml', 
+                                lang= 'en',
+                                uid= f"{counted+start_chapter}")
     chapter.content = chapter_text
     book.add_item(chapter)
     book.toc.append(epub.Link(filetitle+'.xhtml', title, 'chapter'))

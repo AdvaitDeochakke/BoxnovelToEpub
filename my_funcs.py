@@ -28,6 +28,7 @@ def fix_your_titles(title):
     return title
 
 def get_page(page):
+    #print(page, "entered")
     headers = {'User-Agent': 'Mozilla/5.0'}
     try:
         r = requests.get(page, headers=headers)
@@ -37,6 +38,7 @@ def get_page(page):
     except requests.exceptions.HTTPError as err:
         print("Http error : \n", err)
         sys.exit()
+    #print(r)
     return r
 
 def get_soup(r):
@@ -45,6 +47,7 @@ def get_soup(r):
     except Exception as err:
         print("Error while parsing :\n", err)
         sys.exit()
+    #print(soup.prettify())
     return soup
 
 def download_and_return_image_path(page, myId):
@@ -93,7 +96,7 @@ def get_data(page, id=False):
     novel_name = match.group(1)
     # if the word "boxnovel" appears in novel_name
     # remove it using re.sub
-    novel_name = re.sub(r"\b(boxnovel)\b", "", novel_name)
+    novel_name = re.sub(r"\b(bronovel)\b", "", novel_name)
     
     new_name = windows_validate(novel_name)
     if(not id):
@@ -119,7 +122,7 @@ def sterilize(page, start_chapter):
     return page
 
 def sanitize_pagelink(pagelink):
-    pattern = r'^(https://)?boxnovel.com/novel/[a-z-/]*(/chapter-(\d)*(/)?)?$'
+    pattern = r'^(https://)?bronovel.com/novel/[a-z-/]*(/chapter-(\d)*(/)?)?$'
     if not re.match(pattern, pagelink):
         print("Sorry, invalid link, try again")
         print(pagelink)
